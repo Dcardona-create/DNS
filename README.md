@@ -1,13 +1,13 @@
-# Actividades ASIX
+# Actividades ASIXll
 
-Repositorio de prácticas del ciclo formativo **ASIX**.
+Repositorio de prácticas del ciclo formativo **ASIXll**.
 
 ## Actividades
 
 | Actividad | Módulo | Tema | Enlace |
 |---|---|---|---|
-| ACT1 | 037 Seguridad en servicios | Seguridad en DNS: DNS Tunneling | [Ver práctica](ACT1-dns-tunneling/) |
-| ACT2 | 0375 Servicios de red | Análisis y resolución del sistema DNS (en curso) | [Ver práctica](ACT2-dns-resolucion/) |
+| ACT1 |  Seguridad en servicios | Seguridad en DNS: DNS Tunneling | [Ver práctica](ACT1-dns-tunneling/) |
+| ACT2 |  Servicios de red | Análisis y resolución del sistema DNS (en curso) | [Ver práctica](ACT2-dns-resolucion/) |
 
 Cada actividad incluye su código, capturas y documentación en su propia carpeta.
 
