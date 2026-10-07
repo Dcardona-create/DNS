@@ -1,84 +1,53 @@
-# ACT2 · Análisis y Resolución del Sistema DNS
+# ACT2 – DNS: resolución, caché y configuración
 
-Práctica del módulo **0375 Servicios de red** (ASIX).
+## 1. Investigación de dominios y DNS
 
-> Estado: en curso.
-> Entorno: Windows (benchmark) · Linux en máquina virtual (`dig`, configuración DNS y Wireshark en `enp0s3`).
+En este apartado se ha realizado una investigación sobre varios dominios para entender cómo funciona la jerarquía del DNS y quién gestiona cada nivel.
 
----
+### 1.1 Benchmark de servidores DNS
 
-## 1. Ecosistema DNS (OSINT y Web)
+Se ejecutó un benchmark de servidores DNS públicos para identificar los tres más rápidos desde esta máquina. Los resultados sirvieron para seleccionar los DNS que se usarían en pruebas posteriores.
 
-### 1.1 Jerarquía del sistema DNS
+![Benchmark de Nameservers](01-benchmark-nameservers.jpg)
 
-_Pendiente._
+### 1.2 Búsqueda WHOIS de un dominio .es
 
-### 1.2 Herramientas OSINT: Whois y DNS Lookup
+Se utilizó la herramienta WHOIS para investigar el dominio `ifp.es` y obtener información sobre su registrador, fechas de creación y caducidad, y datos de contacto.
 
-_Pendiente._
+![WHOIS de ifp.es](02-whois-ifp-es.jpg)
 
-### 1.3 Rendimiento DNS: GRC DNS Benchmark
+### 1.3 Información de dominios de primer nivel (TLD)
 
-_Pendiente._
+Se consultó la base de datos de IANA para obtener información oficial sobre tres dominios de primer nivel:
 
----
+- `.es` (España)
+- `.cat` (comunidades lingüísticas y culturales catalanas)
+- `.edu` (instituciones educativas, principalmente de EE. UU.)
 
-## 2. Configuración y caché
+![IANA – Dominio .es](03-iana-es.png)
 
-### 2.1 Servidores DNS actuales
+![IANA – Dominio .cat](04-iana-cat.jpg)
 
-_Pendiente._
+![IANA – Dominio .edu](05-iana-edu.jpg)
 
-### 2.2 Cambio de servidores DNS
-
-_Pendiente._
-
-### 2.3 DNS en dispositivo móvil
-
-_Pendiente._
-
-### 2.4 Caché DNS
-
-_Pendiente._
+Estas capturas muestran quién gestiona cada TLD, las políticas de registro y los servidores de nombres asociados.
 
 ---
 
-## 3. Troubleshooting con dig
+## 2. Configuración y caché DNS (en curso)
 
-### 3.1 Consultas A, short, MX y NS
+En los siguientes pasos se trabajará sobre una máquina Linux para:
 
-_Pendiente._
+- Ver la configuración actual de DNS.
+- Comprobar el funcionamiento de la caché DNS.
+- Modificar los servidores DNS si fuera necesario.
 
-### 3.2 SOA, NS y TTL
-
-_Pendiente._
-
-### 3.3 Trazabilidad completa (`dig +trace`)
-
-_Pendiente._
+*(Esta sección se irá completando a medida que se realicen las pruebas en la terminal.)*
 
 ---
 
-## 4. Análisis de tráfico con Wireshark
+## Evidencias
 
-### 4.1 Captura de la consulta
+Todas las capturas de pantalla están disponibles en la carpeta:
 
-_Pendiente._
-
-### 4.2 Transporte, puertos y Transaction ID
-
-_Pendiente._
-
-### 4.3 Flags y respuestas
-
-_Pendiente._
-
----
-
-## Conclusión
-
-_Pendiente._
-
-## Autor
-
-Deivid Cardona
+[`capturas/`](./capturas)
