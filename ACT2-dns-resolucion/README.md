@@ -117,7 +117,7 @@ sudo nscd -i hosts
 
 A continuación, se volvió a consultar el estado de `nscd` con `sudo /usr/sbin/nscd -g` para verificar la operación.
 
-![Vaciado de la caché DNS](../08-vaciado-cache-dns.jpg)
+![Vaciado de la caché DNS](08-vaciado-cache-dns.jpg)
 
 Vaciar la caché DNS invalida las resoluciones almacenadas y obliga al sistema a volver a preguntar al servidor DNS configurado. Es útil para un administrador de sistemas cuando un dominio ha cambiado de dirección IP, se reciben respuestas antiguas o incorrectas, se modifica la configuración DNS o se diagnostican problemas de conectividad y resolución de nombres.
 
@@ -125,4 +125,4 @@ Vaciar la caché DNS invalida las resoluciones almacenadas y obliga al sistema a
 
 ## Evidencias
 
-Las evidencias de esta actividad se encuentran en la carpeta [`ACT2-dns-resolucion/`](./). La captura del vaciado de caché está temporalmente en la raíz del repositorio y se enlaza desde este README.
+Las evidencias de esta actividad se encuentran en la carpeta [`ACT2-dns-resolucion/`](./).
