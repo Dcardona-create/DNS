@@ -20,13 +20,21 @@ Se utilizó la herramienta WHOIS para investigar el dominio `ifp.es` y obtener i
 
 Se consultó la base de datos de IANA para obtener información oficial sobre tres dominios de primer nivel:
 
-- `.es` (España)
-- `.cat` (comunidades lingüísticas y culturales catalanas)
-- `.edu` (instituciones educativas, principalmente de EE. UU.)
+#### Dominio .es (España)
+
+Gestionado por Red.es, es el dominio de primer nivel correspondiente a España.
 
 ![IANA – Dominio .es](03-iana-es.png)
 
+#### Dominio .cat (comunidades lingüísticas y culturales catalanas)
+
+Gestionado por la Fundació puntCAT, es el TLD para la comunidad lingüística y cultural catalana.
+
 ![IANA – Dominio .cat](04-iana-cat.jpg)
+
+#### Dominio .edu (instituciones educativas)
+
+Gestionado por Educause, está reservado principalmente para instituciones de educación superior de EE. UU.
 
 ![IANA – Dominio .edu](05-iana-edu.jpg)
 
