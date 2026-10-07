@@ -123,6 +123,93 @@ Vaciar la caché DNS invalida las resoluciones almacenadas y obliga al sistema a
 
 ---
 
+## 3. Administración: Troubleshooting con DIG y CLI
+
+En entornos Linux, `dig` permite consultar tipos de registros DNS concretos y analizar con detalle las respuestas. Para las pruebas se utilizó el dominio `aliexpress.com`.
+
+### 3.1 Consulta de registros A
+
+Se ejecutó:
+
+```bash
+dig aliexpress.com
+```
+
+La sección `ANSWER SECTION` devolvió dos registros `A`, correspondientes a direcciones IPv4 del dominio:
+
+```text
+47.246.75.137
+47.246.111.53
+```
+
+El campo `IN` identifica la clase Internet y el TTL observado fue de 283 segundos. La respuesta tenía estado `NOERROR`, por lo que la resolución fue correcta.
+
+![Consulta de registro A para aliexpress.com](09-dig-a-aliexpress.jpg)
+
+### 3.2 Formato corto, MX y NS
+
+El comando siguiente muestra únicamente las respuestas:
+
+```bash
+dig +short aliexpress.com
+```
+
+Devolvió las direcciones `47.246.111.53` y `47.246.75.137`. Este formato es útil en scripts Bash porque elimina cabeceras y metadatos; por ejemplo, se puede obtener la primera IP con `dig +short aliexpress.com | head -n 1`.
+
+Para consultar el registro de correo se ejecutó:
+
+```bash
+dig MX aliexpress.com
+```
+
+El resultado fue `mx2.mail.aliyun.com` con preferencia `10`. En los registros MX, el número más bajo representa la prioridad más alta.
+
+Finalmente, la consulta:
+
+```bash
+dig NS aliexpress.com
+```
+
+identificó los servidores autoritativos de la zona:
+
+- `ns1.alibabadns.com`
+- `ns2.alibabadns.com`
+
+![Consultas +short, MX y NS para aliexpress.com](10-dig-short-mx-ns-aliexpress.jpg)
+
+### 3.3 Autoridad y caché: TTL, SOA y NS
+
+Se consultó dos veces el registro A de `aliexpress.com`, esperando cinco segundos entre consultas. El TTL pasó de `600` a `595`, exactamente cinco segundos menos.
+
+Esto demuestra que la respuesta se sirvió desde una caché DNS intermedia: el resolvedor mantiene el registro mientras el TTL no llega a cero y reduce el contador conforme pasa el tiempo. En esta práctica, el DNS que respondió fue el router `192.168.111.1`.
+
+![Comparación de TTL de aliexpress.com](11-dig-ttl-aliexpress.jpg)
+
+Un registro `SOA` (*Start of Authority*) identifica el inicio de autoridad de una zona e incluye información administrativa: servidor maestro, contacto responsable, número de serie y temporizadores de refresco, reintentos, expiración y TTL negativo.
+
+Un registro `NS` (*Name Server*) indica los servidores de nombres que responden autoritativamente por una zona. Por tanto, el SOA describe parámetros de administración y sincronización de la zona, mientras que los NS indican qué servidores tienen autoridad para responder por ella.
+
+### 3.4 Trazabilidad completa con `dig +trace`
+
+Se ejecutó:
+
+```bash
+dig +trace aliexpress.com
+```
+
+La traza muestra la resolución jerárquica completa:
+
+1. El equipo parte de los servidores raíz, representados por `.` y nombres como `a.root-servers.net` hasta `m.root-servers.net`.
+2. Un servidor raíz delega la consulta a los servidores responsables del TLD `.com`, como `a.gtld-servers.net`.
+3. Los servidores del TLD `.com` indican los servidores autoritativos de `aliexpress.com`: `ns1.alibabadns.com` y `ns2.alibabadns.com`.
+4. El servidor autoritativo responde finalmente con los registros A `47.246.75.137` y `47.246.111.53`.
+
+Durante la traza aparecieron mensajes `network unreachable` para algunas direcciones IPv6. Esto no impidió la resolución porque `dig` continuó mediante IPv4 y obtuvo correctamente la respuesta final.
+
+![Traza DNS completa de aliexpress.com](12-dig-trace-aliexpress.jpg)
+
+---
+
 ## Evidencias
 
 Las evidencias de esta actividad se encuentran en la carpeta [`ACT2-dns-resolucion/`](./).
