@@ -11,7 +11,9 @@
 - [Instalación y servicio BIND9](#2-instalación-y-servicio-bind9)
 - [Configuración de zonas](#3-configuración-de-zonas)
 - [Validación DNS](#4-validación-dns)
+- [Análisis de incidencias técnicas](#análisis-de-incidencias-técnicas)
 - [Operación y mantenimiento](#operación-y-mantenimiento)
+- [Conclusiones](#conclusiones)
 - [Evidencias](#evidencias)
 
 ---
@@ -242,6 +244,29 @@ La consulta devuelve el estado `NOERROR`, una respuesta autoritativa mediante el
 
 ---
 
+## Análisis de incidencias técnicas
+
+Durante la configuración de BIND9, los errores más relevantes pueden aparecer al declarar una zona, definir sus registros o recargar el servicio. Antes de aplicar cambios se debe comprobar la sintaxis de la configuración global y de cada archivo de zona:
+
+```bash
+sudo named-checkconf
+sudo named-checkzone deivid.test /etc/bind/zones/db.deivid.test
+sudo named-checkzone 6.168.192.in-addr.arpa /etc/bind/zones/db.6.168.192
+```
+
+Una incidencia habitual es modificar un archivo de zona sin incrementar el serial del registro `SOA`. Tras cada cambio se debe aumentar ese valor y recargar el servicio para que BIND9 utilice la versión actualizada de la zona.
+
+Si el servicio no inicia o una zona no se carga, se debe revisar el estado y los eventos recientes:
+
+```bash
+sudo systemctl status bind9
+sudo journalctl -u bind9 -n 50 --no-pager
+```
+
+La resolución de incidencias consiste en corregir el error detectado, volver a ejecutar las comprobaciones sintácticas y recargar BIND9. Finalmente, se deben repetir las consultas `dig` directa e inversa para verificar que la respuesta sigue siendo autoritativa y no presenta errores.
+
+---
+
 ## Operación y mantenimiento
 
 ### Después de modificar una zona
@@ -268,6 +293,16 @@ dig @127.0.0.1 deivid.test SOA
 - Si BIND9 no inicia, revisar primero la salida de `named-checkconf`.
 - Si una zona no carga, comprobar el nombre del archivo, los permisos y el serial SOA.
 - Si una consulta devuelve `NXDOMAIN`, verificar el registro solicitado y que se consulta el servidor DNS correcto.
+
+---
+
+## Conclusiones
+
+La práctica ha permitido desplegar un servidor DNS autoritativo con BIND9 en Debian GNU/Linux 13 y configurar una zona directa junto con su zona inversa para la red `192.168.6.0/24`.
+
+Las consultas realizadas con `dig` han confirmado la resolución directa de `ns1.deivid.test.` a `192.168.6.100` y la resolución inversa de `192.168.6.100` a `ns1.deivid.test.`. Ambas respuestas devolvieron el estado `NOERROR` y el flag `aa`, confirmando que el servidor BIND9 responde de forma autoritativa para las zonas configuradas.
+
+También se ha comprobado la importancia de validar la configuración con `named-checkconf` y `named-checkzone`, incrementar el serial SOA después de cada modificación y utilizar los registros del servicio para diagnosticar incidencias antes de recargar BIND9.
 
 ---
 
