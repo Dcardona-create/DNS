@@ -62,23 +62,39 @@ La máquina virtual actúa como servidor DNS. BIND9 carga la configuración glob
                                                                         │
                                                        ┌────────────────┴────────────────┐
                                                        │ /etc/bind/named.conf.local       │
-                                                       │ archivo de zona directa          │
-                                                       │ archivo de zona inversa          │
+                                                       │ /etc/bind/zones/db.deivid.test   │
+                                                       │ /etc/bind/zones/db.6.168.192     │
                                                        └─────────────────────────────────┘
 ```
 
 | Elemento | Función en la práctica |
 |---|---|
 | BIND9 | Servicio DNS que procesa las consultas. |
-| Zona directa | Asocia nombres de host con registros `A`. |
-| Zona inversa | Asocia direcciones IP con registros `PTR`. |
+| Zona directa `deivid.test` | Asocia nombres de host con registros `A`. |
+| Zona inversa `6.168.192.in-addr.arpa` | Asocia direcciones IP con registros `PTR`. |
 | `dig` / `nslookup` | Herramientas usadas para validar la resolución. |
 
 ---
 
 ## 1. Preparación del entorno
 
-Antes de configurar el servicio se revisa la máquina virtual y su conectividad de red. El adaptador debe permitir que el sistema alcance su puerta de enlace y los servidores externos necesarios para instalar paquetes o resolver consultas fuera de la zona local.
+Antes de configurar el servicio se revisa la máquina virtual y su conectividad de red. La interfaz `enp0s3` proporciona salida a Internet mediante NAT, mientras que la interfaz `enp0s8` pertenece a la red local del laboratorio y se utiliza para el servidor DNS autoritativo.
+
+### Características de hardware y software
+
+| Elemento | Configuración utilizada |
+|---|---|
+| Hostname estático | `Deivid` |
+| Sistema operativo | Debian GNU/Linux 13 (Trixie) |
+| Kernel | Linux `6.12.111+deb13-amd64` |
+| Arquitectura | `x86-64` |
+| Entorno de virtualización | Oracle VirtualBox |
+| Interfaz NAT | `enp0s3` |
+| IP NAT | `10.0.2.15/24` (asignación DHCP) |
+| Puerta de enlace predeterminada | `10.0.2.2` |
+| Interfaz de laboratorio | `enp0s8` |
+| IP del servidor DNS | `192.168.6.100/24` |
+| Red local del laboratorio | `192.168.6.0/24` |
 
 ![Entorno de máquina virtual y configuración de red](03-entorno-vm-y-red.png)
 
@@ -86,9 +102,9 @@ Antes de configurar el servicio se revisa la máquina virtual y su conectividad 
 
 ### Pasos
 
-1. Iniciar la máquina virtual y comprobar que la interfaz de red tiene una dirección IP válida.
-2. Verificar la conectividad con la puerta de enlace y, si procede, con una dirección externa.
-3. Confirmar que el nombre de la interfaz y la dirección de red coinciden con los valores que se utilizarán en las zonas DNS.
+1. Iniciar la máquina virtual y comprobar que las interfaces de red tienen una dirección IP válida.
+2. Verificar la conectividad mediante la puerta de enlace `10.0.2.2` y, si procede, con una dirección externa.
+3. Confirmar que la interfaz `enp0s8` mantiene la dirección `192.168.6.100/24`, utilizada por las zonas DNS locales.
 
 ---
 
@@ -110,28 +126,26 @@ sudo systemctl status bind9
 ### Validación esperada
 
 - `systemctl status bind9` muestra el servicio como `active (running)`.
-- El sistema mantiene conectividad para consultas DNS externas.
+- El sistema mantiene conectividad para consultas DNS externas a través de `enp0s3`.
 - El puerto DNS queda disponible para las consultas configuradas en el host.
 
 ---
 
 ## 3. Configuración de zonas
 
-La configuración se centraliza en `/etc/bind/`. El archivo `named.conf.local` declara las zonas que administra el servidor y cada zona apunta a su correspondiente archivo de registros.
+La configuración se centraliza en `/etc/bind/`. El archivo `/etc/bind/named.conf.local` declara las zonas que administra el servidor y cada zona apunta a su correspondiente archivo de registros en `/etc/bind/zones/`.
 
 ```conf
-zone "ejemplo.local" {
+zone "deivid.test" {
     type master;
-    file "/etc/bind/db.ejemplo.local";
+    file "/etc/bind/zones/db.deivid.test";
 };
 
-zone "0.168.192.in-addr.arpa" {
+zone "6.168.192.in-addr.arpa" {
     type master;
-    file "/etc/bind/db.192.168.0";
+    file "/etc/bind/zones/db.6.168.192";
 };
 ```
-
-> Los nombres y la red anteriores son un ejemplo de estructura. En la práctica se deben conservar los valores configurados en las capturas y en los archivos de zona del entorno.
 
 ![Configuración de BIND9 y archivos de zona](04-configuracion-bind9-y-zonas.png)
 
@@ -139,31 +153,38 @@ zone "0.168.192.in-addr.arpa" {
 
 ### Zona directa
 
-La zona directa define registros como los siguientes:
+La zona directa `deivid.test` asocia el servidor DNS `ns1.deivid.test.` con la dirección IPv4 `192.168.6.100`.
 
 ```dns
-@       IN  SOA ns1.ejemplo.local. admin.ejemplo.local. (
-            2026100801 ; Serial
-            604800     ; Refresh
-            86400      ; Retry
-            2419200    ; Expire
-            604800 )   ; Negative Cache TTL
+$TTL 86400
+@   IN  SOA ns1.deivid.test. hostmaster.deivid.test. (
+        1       ; Serial
+        86400   ; Refresh
+        7200    ; Retry
+        3600000 ; Expire
+        86400   ; Negative Cache TTL
+)
 
-@       IN  NS  ns1.ejemplo.local.
-ns1     IN  A   192.168.0.10
-host1   IN  A   192.168.0.20
+@       IN  NS  ns1.deivid.test.
+ns1     IN  A   192.168.6.100
 ```
 
 ### Zona inversa
 
-La zona inversa permite recuperar un nombre a partir de una IP:
+La zona inversa `6.168.192.in-addr.arpa` permite recuperar el nombre de host a partir de la dirección IP `192.168.6.100`.
 
 ```dns
-@       IN  SOA ns1.ejemplo.local. admin.ejemplo.local. (
-            2026100801 604800 86400 2419200 604800 )
-@       IN  NS  ns1.ejemplo.local.
-10      IN  PTR ns1.ejemplo.local.
-20      IN  PTR host1.ejemplo.local.
+$TTL 86400
+@   IN  SOA ns1.deivid.test. hostmaster.deivid.test. (
+        1       ; Serial
+        86400   ; Refresh
+        7200    ; Retry
+        3600000 ; Expire
+        86400   ; Negative Cache TTL
+)
+
+@       IN  NS  ns1.deivid.test.
+100     IN  PTR ns1.deivid.test.
 ```
 
 ### Comprobación sintáctica
@@ -172,8 +193,8 @@ Antes de reiniciar el servicio conviene validar archivos y configuración:
 
 ```bash
 sudo named-checkconf
-sudo named-checkzone ejemplo.local /etc/bind/db.ejemplo.local
-sudo named-checkzone 0.168.192.in-addr.arpa /etc/bind/db.192.168.0
+sudo named-checkzone deivid.test /etc/bind/zones/db.deivid.test
+sudo named-checkzone 6.168.192.in-addr.arpa /etc/bind/zones/db.6.168.192
 sudo systemctl restart bind9
 ```
 
@@ -181,14 +202,30 @@ sudo systemctl restart bind9
 
 ## 4. Validación DNS
 
-Una vez cargadas las zonas, las consultas directas e inversas confirman que BIND9 responde con los registros definidos. La verificación debe hacerse contra la IP local del servidor o mediante el resolvedor que apunte a ese servidor.
+Una vez cargadas las zonas, las consultas directas e inversas confirman que BIND9 responde como servidor autoritativo para los registros definidos.
+
+### Consulta directa
 
 ```bash
-# Consulta directa
- dig @127.0.0.1 host1.ejemplo.local A
+dig @127.0.0.1 ns1.deivid.test A
+```
 
-# Consulta inversa
- dig @127.0.0.1 -x 192.168.0.20
+La consulta devuelve el estado `NOERROR`, una respuesta autoritativa mediante el flag `aa` y el siguiente registro:
+
+```text
+ns1.deivid.test. 86400 IN A 192.168.6.100
+```
+
+### Consulta inversa
+
+```bash
+dig @127.0.0.1 -x 192.168.6.100
+```
+
+La consulta devuelve el estado `NOERROR`, una respuesta autoritativa mediante el flag `aa` y el siguiente registro:
+
+```text
+100.6.168.192.in-addr.arpa. 86400 IN PTR ns1.deivid.test.
 ```
 
 ![Verificación de zonas directa e inversa](01-verificacion-zonas-directa-inversa.png)
@@ -197,10 +234,10 @@ Una vez cargadas las zonas, las consultas directas e inversas confirman que BIND
 
 ### Criterios de éxito
 
-| Prueba | Resultado que se debe observar |
+| Prueba | Resultado observado |
 |---|---|
-| Consulta directa | Un registro `A` con la IP asignada al host. |
-| Consulta inversa | Un registro `PTR` con el FQDN asociado a la IP. |
+| Consulta directa | `ns1.deivid.test.` devuelve el registro `A` con la IP `192.168.6.100`. |
+| Consulta inversa | `192.168.6.100` devuelve el registro `PTR` `ns1.deivid.test.` |
 | Estado del servicio | BIND9 activo y sin errores de sintaxis o carga de zonas. |
 
 ---
@@ -225,7 +262,7 @@ sudo rndc reload
 sudo systemctl status bind9
 sudo journalctl -u bind9 -n 50 --no-pager
 sudo ss -lntup | grep ':53'
-dig @127.0.0.1 ejemplo.local SOA
+dig @127.0.0.1 deivid.test SOA
 ```
 
 - Si BIND9 no inicia, revisar primero la salida de `named-checkconf`.
@@ -255,5 +292,3 @@ ACT3-instalacion-bind9/
 ├── 04-configuracion-bind9-y-zonas.png
 └── README.md
 ```
-
-> Las direcciones IP, dominios y nombres de host de los bloques de ejemplo deben ajustarse a los valores reales documentados en las capturas y en la configuración del laboratorio.
