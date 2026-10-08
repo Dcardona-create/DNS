@@ -1,13 +1,14 @@
-# Actividades ASIXll
+# Actividades ASIXII
 
-Repositorio de prácticas del ciclo formativo **ASIXll**.
+Repositorio de prácticas del ciclo formativo ASIXII.
 
 ## Actividades
 
 | Actividad | Módulo | Tema | Enlace |
 |---|---|---|---|
-| ACT1 |  Seguridad en servicios | Seguridad en DNS: DNS Tunneling | [Ver práctica](ACT1-dns-tunneling/) |
-| ACT2 |  Servicios de red | Análisis y resolución del sistema DNS (en curso) | [Ver práctica](ACT2-dns-resolucion/) |
+| ACT1 | Seguridad en servicios | Seguridad en DNS: DNS Tunneling | [Ver práctica](./ACT1-dns-tunneling/) |
+| ACT2 | Servicios de red | Análisis y resolución del sistema DNS | [Ver práctica](./ACT2-dns-resolucion/) |
+| ACT3 | Servicios de red | Instalación y configuración de BIND9 | [Ver práctica](./ACT3-instalacion-bind9/) |
 
 Cada actividad incluye su código, capturas y documentación en su propia carpeta.
 
