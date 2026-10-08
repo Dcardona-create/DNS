@@ -5,6 +5,7 @@
 ## Índice
 
 - [Objetivo](#objetivo)
+- [Introducción teórica](#introducción-teórica)
 - [Escenario y arquitectura](#escenario-y-arquitectura)
 - [Preparación del entorno](#1-preparación-del-entorno)
 - [Instalación y servicio BIND9](#2-instalación-y-servicio-bind9)
@@ -18,6 +19,36 @@
 ## Objetivo
 
 El objetivo de esta actividad es instalar y dejar operativo **BIND9** como servidor DNS en una máquina virtual GNU/Linux. La configuración incluye una zona de búsqueda directa —nombre a dirección IP— y una zona inversa —dirección IP a nombre—, comprobando finalmente que ambas consultas son respondidas por el servicio local.
+
+## Introducción teórica
+
+### Función del DNS
+
+El Domain Name System (DNS) es el servicio encargado de traducir nombres de dominio legibles, como `www.ejemplo.com`, a direcciones IP que utilizan los equipos para comunicarse. Es esencial para el funcionamiento de Internet porque permite acceder a servidores y servicios mediante nombres, sin necesidad de conocer o memorizar sus direcciones numéricas.
+
+### Jerarquía del DNS
+
+DNS se organiza de forma jerárquica. En la parte superior se encuentran los servidores raíz, que derivan las consultas hacia los servidores de dominio de nivel superior o TLD, como `.com`, `.es` o `.org`. Los servidores TLD indican cuáles son los servidores autoritativos de cada dominio. Estos servidores autoritativos almacenan los registros definitivos de una zona DNS. Por último, el resolutor recursivo realiza las consultas necesarias y devuelve la respuesta al cliente.
+
+### Consultas iterativas y recursivas
+
+En una consulta recursiva, el cliente solicita una respuesta final y el servidor DNS se encarga de consultar otros servidores si no dispone de la información solicitada. En una consulta iterativa, cada servidor devuelve la mejor información que posee, normalmente una referencia al siguiente servidor que debe consultarse para continuar la resolución.
+
+### Registros de recursos DNS
+
+Los registros de recursos, también llamados RR, almacenan la información de una zona DNS. Los principales son:
+
+- `SOA`: identifica la autoridad de la zona e incluye parámetros como el número de serie.
+- `NS`: indica los servidores de nombres autoritativos de la zona.
+- `A`: asocia un nombre de host con una dirección IPv4.
+- `AAAA`: asocia un nombre de host con una dirección IPv6.
+- `CNAME`: crea un alias hacia otro nombre de dominio.
+- `MX`: define los servidores responsables de recibir correo electrónico para un dominio.
+- `PTR`: permite la resolución inversa, asociando una dirección IP a un nombre de dominio.
+
+### Seguridad en DNS
+
+El servicio DNS puede verse afectado por ataques como la suplantación de respuestas DNS, la contaminación de caché o *cache poisoning*, transferencias de zona no autorizadas y ataques de amplificación DDoS. Para reducir estos riesgos se pueden aplicar medidas como DNSSEC, la limitación de recursión, restricciones de transferencia de zona mediante listas de control de acceso, la actualización periódica de BIND9 y la monitorización de registros y eventos del servicio.
 
 ## Escenario y arquitectura
 
