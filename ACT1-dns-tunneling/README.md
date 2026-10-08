@@ -1,101 +1,73 @@
-# ACT1 · Seguridad en DNS: DNS Tunneling
+# Actividad 1 — DNS Tunneling
 
-Práctica guiada del módulo **037 Seguridad en servicios**. Se analiza una comunicación DNS local en la que se transmite un mensaje hexadecimal dentro de un subdominio.
+## Índice
 
-> Entorno: GNU/Linux · Python 3 · UDP/53 · Wireshark · interfaz loopback `127.0.0.1`.
+1. [Introducción y objetivos](#1-introducción-y-objetivos)
+2. [Funcionamiento del DNS Tunneling](#2-funcionamiento-del-dns-tunneling)
+3. [Implementación del cliente DNS](#3-implementación-del-cliente-dns)
+4. [Implementación del servidor DNS](#4-implementación-del-servidor-dns)
+5. [Ejecución de la petición DNS](#5-ejecución-de-la-petición-dns)
+6. [Análisis de la comunicación con Wireshark](#6-análisis-de-la-comunicación-con-wireshark)
+7. [Conclusiones](#7-conclusiones)
 
----
+## 1. Introducción y objetivos
 
-## Ejecución
+Esta actividad muestra una implementación básica de DNS Tunneling mediante un cliente y un servidor desarrollados en Python. El objetivo es comprender cómo una petición DNS puede utilizarse para transportar información entre un cliente y un servidor, así como observar el tráfico generado durante la comunicación.
 
-En una terminal se inicia el servidor DNS. Como utiliza el puerto 53, se ejecuta con permisos de administrador:
+Los objetivos principales son:
+
+- Implementar un cliente que envíe una petición DNS.
+- Implementar un servidor que reciba y procese la petición.
+- Comprobar la comunicación entre ambos extremos.
+- Analizar los paquetes intercambiados mediante Wireshark.
+
+## 2. Funcionamiento del DNS Tunneling
+
+DNS Tunneling es una técnica que utiliza consultas y respuestas DNS como canal de comunicación. En esta práctica, el cliente genera una petición DNS y el servidor la recibe para procesar la información enviada.
+
+El flujo de trabajo es el siguiente:
+
+1. Se inicia el servidor DNS y queda a la espera de peticiones.
+2. El cliente construye y envía una consulta DNS.
+3. El servidor recibe la petición y procesa el contenido.
+4. Se observa la comunicación desde el cliente, el servidor y Wireshark.
+
+## 3. Implementación del cliente DNS
+
+El cliente se ha desarrollado en Python y se encarga de crear y enviar la petición DNS al servidor.
+
+Archivo utilizado: `dns_client_1_peticion.py`.
 
 ```bash
-sudo python3 dns_server_1_peticion.py
+python3 dns_client_1_peticion.py
 ```
 
-En otra terminal de la misma máquina se lanza el cliente:
+## 4. Implementación del servidor DNS
+
+El servidor se ha desarrollado en Python y permanece a la espera de recibir solicitudes DNS enviadas por el cliente.
+
+Archivo utilizado: `dns_server_1_peticion.py`.
 
 ```bash
-sudo python3 dns_client_1_peticion.py
+python3 dns_server_1_peticion.py
 ```
 
-### Cliente DNS
+## 5. Ejecución de la petición DNS
 
-El cliente envía una consulta DNS de tipo `A` y recibe una respuesta correcta con `rcode NOERROR`.
+Para realizar la prueba, primero se ejecuta el servidor y, a continuación, el cliente. La siguiente captura muestra el envío de la petición desde el cliente.
 
-![Ejecución del cliente DNS](cliente_peticion.jpg)
+![Petición enviada desde el cliente](cliente_peticion.jpg)
 
----
+El servidor recibe y procesa la petición DNS enviada por el cliente.
 
-## Datos transmitidos
+![Petición recibida en el servidor](server.peticion.jpg)
 
-La consulta utiliza el nombre de dominio:
+## 6. Análisis de la comunicación con Wireshark
 
-```text
-6461746f73206663756c746f73.secreto.com
-```
+Wireshark permite verificar que la comunicación se ha realizado mediante paquetes DNS. En la captura se puede observar el tráfico generado durante la petición entre el cliente y el servidor.
 
-El primer subdominio contiene el texto codificado en hexadecimal:
+![Análisis de la comunicación DNS con Wireshark](wireshark.jpg)
 
-```text
-6461746f73206663756c746f73
-```
+## 7. Conclusiones
 
-Al convertirlo desde hexadecimal a ASCII, se obtiene:
-
-```text
-datos ocultos
-```
-
-El servidor responde con el registro:
-
-```text
-secreto.com. 300 IN A 4.3.2.1
-```
-
-### Servidor DNS
-
-El servidor recibe la petición, identifica el subdominio, recupera el mensaje `datos ocultos` y construye la respuesta DNS.
-
-![Salida del servidor DNS](server.peticion.jpg)
-
----
-
-## Análisis con Wireshark
-
-La captura se realizó en la interfaz `lo` aplicando el filtro:
-
-```text
-dns
-```
-
-Se observa una consulta DNS por UDP hacia el puerto 53, con origen y destino `127.0.0.1`. El nombre solicitado contiene el subdominio hexadecimal usado para transportar el mensaje.
-
-![Consulta DNS capturada en Wireshark](wireshark.jpg)
-
----
-
-## Conclusión
-
-La práctica demuestra el funcionamiento básico de un canal de datos mediante DNS en un entorno controlado. El cliente incluye información codificada dentro de una consulta DNS válida y el servidor la recupera al procesar el subdominio.
-
-En seguridad, nombres de dominio con etiquetas largas, codificadas o poco habituales pueden indicar comunicaciones de DNS tunneling, por lo que conviene supervisar las consultas DNS y sus patrones.
-
-## Archivos de la actividad
-
-```text
-ACT1-dns-tunneling/
-├── README.md
-├── dns_client_1_peticion.py
-├── dns_server_1_peticion.py
-├── cliente_peticion.jpg
-├── server.peticion.jpg
-├── wireshark.jpg
-└── docs/
-    └── informe.md
-```
-
-## Autor
-
-Deivid Cardona
+La actividad permite comprobar el funcionamiento básico de una comunicación mediante DNS Tunneling. La implementación cliente-servidor demuestra cómo se puede enviar información dentro de una petición DNS y cómo el servidor puede recibirla y procesarla. El análisis con Wireshark confirma el intercambio de tráfico DNS durante la prueba.
