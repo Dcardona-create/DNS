@@ -242,32 +242,58 @@ Durante la traza aparecieron mensajes `network unreachable` para algunas direcci
 
 ## 4. Análisis de tráfico DNS con Wireshark
 
-> Sección preparada para documentar la captura y el análisis de una consulta MX. Se completará con las evidencias generadas durante la práctica.
+Para comprobar qué información viaja por la red durante una resolución DNS, se realizó una captura con Wireshark en la interfaz Ethernet. Durante la captura se ejecutó en PowerShell:
 
-### 4.1 Captura de la consulta MX
-
-Se realizará una captura en la interfaz de red activa de Wireshark con el filtro de visualización `dns`. Mientras la captura esté activa se ejecutará:
-
-```bash
+```powershell
 nslookup -type=mx google.com
 ```
 
-La evidencia mostrará la petición DNS (*query*) y la respuesta DNS (*response*) correspondientes.
+El filtro de visualización utilizado fue:
 
-### 4.2 Transporte y puertos
+```text
+dns.qry.name == "google.com"
+```
 
-Pendiente de documentar a partir de la trama capturada: protocolo de transporte utilizado, puerto de origen dinámico del cliente y puerto de destino `53` del servidor DNS.
+Con este filtro se aisló el intercambio formado por una petición DNS y su respuesta.
 
-### 4.3 Identificador y flags
+### 4.1 Petición y respuesta MX
 
-Pendiente de documentar a partir del bloque **Domain Name System**: el *Transaction ID* compartido por petición y respuesta, y el valor de la flag **Authoritative Answer** en la respuesta.
+La petición fue enviada desde el equipo cliente `192.168.111.30` al resolvedor DNS local `192.168.111.1`. La respuesta recorrió el camino inverso y devolvió un registro MX para `google.com`.
 
-### 4.4 Respuestas MX y prioridad
+![Petición y respuesta DNS para el registro MX de google.com](13-wireshark-query-response-mx.png)
 
-Pendiente de documentar a partir de la sección **Answers**: servidores MX de Google recibidos y cuál tiene la preferencia más alta, es decir, el número más bajo.
+### 4.2 Capa de transporte y puertos
+
+La consulta DNS utilizó **UDP**. DNS usa UDP por defecto para las consultas habituales porque evita el establecimiento de conexión de TCP, reduce la sobrecarga y permite respuestas rápidas. TCP se emplea, entre otros casos, cuando una respuesta no cabe en UDP, para transferencias de zona o cuando el cliente y servidor lo requieren.
+
+En la respuesta observada, el servidor DNS `192.168.111.1` utilizó el puerto conocido `53` como puerto de origen y el cliente `192.168.111.30` recibió la respuesta en el puerto dinámico `55614`. En la petición ocurre al revés: el cliente utiliza `55614` como origen y el servidor utiliza `53` como destino.
+
+![Respuesta DNS sobre UDP y puertos de origen y destino](14-wireshark-udp-ports.png)
+
+### 4.3 Identificador de transacción y flags
+
+La petición y la respuesta comparten el **Transaction ID `0x0002`**. Este identificador permite al cliente relacionar la respuesta recibida con la consulta que había enviado.
+
+En la respuesta, Wireshark muestra `Flags: 0x8180` y `Reply code: No error`, por lo que la consulta fue resuelta correctamente. La flag **Authoritative Answer** tiene valor `0`: el DNS `192.168.111.1` no es un servidor autoritativo de `google.com`, sino que actúa como resolvedor local o reenviador y devuelve una respuesta no autoritativa.
+
+También aparecen `Recursion desired = 1` y `Recursion available = 1`, lo que indica que el cliente solicitó resolución recursiva y que el servidor puede realizarla.
+
+![Transaction ID y flags de la respuesta DNS](15-wireshark-transaction-id-flags.png)
+
+### 4.4 Respuesta MX y prioridad
+
+En el bloque **Answers** se obtuvo el siguiente registro:
+
+```text
+google.com: type MX, class IN, preference 10, mx smtp.google.com
+```
+
+El valor de preferencia `10` es la prioridad del servidor de correo. En los registros MX, el número más bajo representa la mayor prioridad; en esta respuesta, `smtp.google.com` es el servidor MX devuelto con prioridad `10`.
+
+![Registro MX, preferencia y servidor de correo](16-wireshark-mx-answers.png)
 
 ---
 
 ## Evidencias
 
-Las capturas de esta actividad se encuentran en la carpeta [`ACT2-dns-resolucion/`](./). La sección de Wireshark se completará con imágenes `13` a `16` tras realizar la captura de tráfico DNS.
+Las capturas de esta actividad se encuentran en la carpeta [`ACT2-dns-resolucion/`](./).
